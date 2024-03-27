@@ -49,7 +49,7 @@ class Techcrunch:
         # Логер должен подключаться так. Вся настройка лежит на платформе
         self.logger = logging.getLogger(self.__class__.__name__)
 
-        # УДалить DRAFT
+        # Уlалить DRAFT
         logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
         consoleHandler = logging.StreamHandler()
         consoleHandler.setFormatter(logFormatter)
@@ -95,22 +95,22 @@ class Techcrunch:
             self.logger.debug('Загрузка списка элементов...')
 
             doc_table = self.driver.find_element(By.CLASS_NAME, 'river').find_elements(By.XPATH,
-                                                                                           '//article[contains(@class,\'post-block\')]')
+                                                                                       '//article[contains(@class,\'post-block\')]')
             self.logger.debug('Обработка списка элементов...')
 
             # Цикл по всем строкам таблицы элементов на текущей странице
             self.logger.info(f'len(doc_table) = {len(doc_table)}')
-            #print(doc_table)
-            #for element in doc_table:
+            # print(doc_table)
+            # for element in doc_table:
             #    print(element.text)
             #    print('*'*45)
 
             for i, element in enumerate(doc_table):
-                 #continue
-                 #print(i)
-                 #print(element)
-                 #print(doc_table[i])
-                #if 'my-0' in doc_table[i].get_attribute('class'):
+                # continue
+                # print(i)
+                # print(element)
+                # print(doc_table[i])
+                # if 'my-0' in doc_table[i].get_attribute('class'):
                 #    print(doc_table[i].get_attribute('class'))
                 #    print(doc_table[i].text)
                 #    continue
@@ -118,8 +118,9 @@ class Techcrunch:
                 element_locked = False
 
                 try:
-                    title = doc_table[i].find_element(By.XPATH, '//a[contains(@class,\'post-block__title__link\')]').text
-                    # print(title)
+                    title = doc_table[i].find_element(By.XPATH,
+                                                      './/a[contains(@class,\'post-block__title__link\')]').text
+                    print(title)
                     # title = element.find_element(By.XPATH, '//*[@id="feed-item-title-1"]/a').text
 
                 except:
@@ -150,7 +151,8 @@ class Techcrunch:
                 book = ' '
 
                 try:
-                    web_link = doc_table[i].find_element(By.XPATH, './/*[contains(@class,\'post-block__title\')]').find_element(
+                    web_link = doc_table[i].find_element(By.XPATH,
+                                                         './/*[contains(@class,\'post-block__title\')]').find_element(
                         By.TAG_NAME, 'a').get_attribute('href')
                 except:
                     self.logger.exception('Не удалось извлечь web_link, пропущен')
@@ -164,15 +166,20 @@ class Techcrunch:
                 time.sleep(5)
                 # self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '.print-wrapper')))
 
+                self.logger.info(f'{i} {title} {web_link}')
+
                 try:
                     pub_date = self.utc.localize(
-                        dateparser.parse(' '.join(self.driver.find_element(By.XPATH, '//div[contains(@class, [full-date-time]').text.split()[1:])))
+                        dateparser.parse(self.driver.find_element(By.XPATH,
+                                                                  '//time[contains(@class, \'full-date-time\')]').get_attribute(
+                            'datetime')))
                 except:
-                    # self.logger.exception('Не удалось извлечь pub_date')
+                    self.logger.exception('Не удалось извлечь pub_date')
                     pub_date = None
 
                 try:
-                    text_content = self.driver.find_element(By.XPATH, '//div[contains(@class, [article-content]').text
+                    text_content = self.driver.find_element(By.XPATH,
+                                                            '//div[contains(@class, \'article-content\')]').text
                 except:
                     self.logger.exception('Не удалось извлечь text_content')
                     text_content = None
@@ -207,8 +214,9 @@ class Techcrunch:
                 )))
                 self.driver.close()
                 self.driver.switch_to.window(self.driver.window_handles[0])
+
             try:
-                #// *[ @ id = "all-materials"] / font[2] / a[5]
+                # // *[ @ id = "all-materials"] / font[2] / a[5]
                 pagination_arrow = self.driver.find_element(By.XPATH, '//*[@id="all-materials"]/font[2]/a[5]')
                 pg_num = pagination_arrow.get_attribute('href')
                 self.driver.execute_script('arguments[0].click()', pagination_arrow)
