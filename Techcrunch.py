@@ -49,7 +49,7 @@ class Techcrunch:
         # Логер должен подключаться так. Вся настройка лежит на платформе
         self.logger = logging.getLogger(self.__class__.__name__)
 
-        # УДалить DRAFT
+        # Уlалить DRAFT
         logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
         consoleHandler = logging.StreamHandler()
         consoleHandler.setFormatter(logFormatter)
@@ -118,8 +118,8 @@ class Techcrunch:
                 element_locked = False
 
                 try:
-                    title = doc_table[i].find_element(By.XPATH, '//a[contains(@class,\'post-block__title__link\')]').text
-                    # print(title)
+                    title = doc_table[i].find_element(By.XPATH, './/a[contains(@class,\'post-block__title__link\')]').text
+                    print(title)
                     # title = element.find_element(By.XPATH, '//*[@id="feed-item-title-1"]/a').text
 
                 except:
@@ -164,15 +164,17 @@ class Techcrunch:
                 time.sleep(5)
                 # self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, '.print-wrapper')))
 
+                self.logger.info(f'{i} {title} {web_link}')
+
                 try:
                     pub_date = self.utc.localize(
-                        dateparser.parse(' '.join(self.driver.find_element(By.XPATH, '//div[contains(@class, [full-date-time]').text.split()[1:])))
+                        dateparser.parse(self.driver.find_element(By.XPATH, '//time[contains(@class, \'full-date-time\')]').get_attribute('datetime')))
                 except:
-                    # self.logger.exception('Не удалось извлечь pub_date')
+                    self.logger.exception('Не удалось извлечь pub_date')
                     pub_date = None
 
                 try:
-                    text_content = self.driver.find_element(By.XPATH, '//div[contains(@class, [article-content]').text
+                    text_content = self.driver.find_element(By.XPATH, '//div[contains(@class, \'article-content\')]').text
                 except:
                     self.logger.exception('Не удалось извлечь text_content')
                     text_content = None
@@ -207,6 +209,7 @@ class Techcrunch:
                 )))
                 self.driver.close()
                 self.driver.switch_to.window(self.driver.window_handles[0])
+
             try:
                 #// *[ @ id = "all-materials"] / font[2] / a[5]
                 pagination_arrow = self.driver.find_element(By.XPATH, '//*[@id="all-materials"]/font[2]/a[5]')
