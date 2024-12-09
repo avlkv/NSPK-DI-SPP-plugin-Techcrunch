@@ -83,34 +83,29 @@ class Techсrunch:
         # Тут должен находится блок кода, отвечающий за парсинг конкретного источника
         # -
         self._initial_access_source("https://techcrunch.com/category/fintech/")
-        self._wait.until(ec.presence_of_element_located((By.CSS_SELECTOR, '.river')))
+        self._wait.until(ec.presence_of_element_located((By.XPATH, "//*[contains(@class,'loop-card__content')]")))
         time.sleep(3)
         while True:
 
             self.logger.debug('Загрузка списка элементов...')
-            doc_table = self._driver.find_element(By.CLASS_NAME, 'river').find_elements(By.XPATH,
-                                                                                       '//article[contains(@class,\'post-block\')]')
+            doc_table = self._driver.find_elements(By.XPATH, "//div[contains(@class,'wp-block-query is-layout-flow wp-block-query-is-layout-flow has-rapid-read has-loaded-user')]//div[contains(@class,'loop-card__content')]")
             self.logger.debug('Обработка списка элементов...')
 
             for i, element in enumerate(doc_table):
+                self.logger.debug(doc_table[i].text)
+
+            for i, element in enumerate(doc_table):
                 try:
-                    title = doc_table[i].find_element(By.XPATH,
-                                                      './/a[contains(@class,\'post-block__title__link\')]').text
+                    title = doc_table[i].find_element(By.XPATH, ".//h3[contains(@class,'loop-card__title')]").text
                 except:
                     self.logger.exception('Не удалось извлечь title')
                     continue
                 other_data = None
 
                 try:
-                    abstract = doc_table[i].find_element(By.CLASS_NAME, 'post-block__content').text
-                except:
-                    self.logger.exception('Не удалось извлечь abstract')
-                    abstract = None
-
-                try:
-                    web_link = doc_table[i].find_element(By.XPATH,
-                                                         './/*[contains(@class,\'post-block__title\')]').find_element(
-                        By.TAG_NAME, 'a').get_attribute('href')
+                    web_link = doc_table[i].find_element(By.XPATH, ".//h3[contains(@class,'loop-card__title')]").find_element(By.TAG_NAME,
+                                                                                                         'a').get_attribute(
+                        'href')
                 except:
                     self.logger.exception('Не удалось извлечь web_link, пропущен')
                     continue
@@ -118,19 +113,25 @@ class Techсrunch:
                 self._driver.execute_script("window.open('');")
                 self._driver.switch_to.window(self._driver.window_handles[1])
                 self._driver.get(web_link)
-                time.sleep(5)
+                time.sleep(3)
+
                 try:
-                    pub_date = self.utc.localize(
-                        dateparser.parse(self._driver.find_element(By.XPATH,
-                                                                  '//time[contains(@class, \'full-date-time\')]').get_attribute(
-                            'datetime')))
+                    abstract = self._driver.find_element(By.ID, 'speakable-summary').text
+                except:
+                    self.logger.exception('Не удалось извлечь abstract')
+                    abstract = None
+
+                try:
+                    pub_date = dateparser.parse(self._driver.find_element(By.XPATH,
+                                                                   "//div[contains(@class,'wp-block-post-date')]/time").get_attribute(
+                            'datetime'))
                 except:
                     self.logger.exception('Не удалось извлечь pub_date')
                     continue
 
                 try:
                     text_content = self._driver.find_element(By.XPATH,
-                                                            '//div[contains(@class, \'article-content\')]').text
+                                                             "//div[contains(@class, 'entry-content')]").text
                 except:
                     self.logger.exception('Не удалось извлечь text_content')
                     text_content = None
@@ -152,7 +153,7 @@ class Techсrunch:
 
             try:
                 # // *[ @ id = "all-materials"] / font[2] / a[5]
-                pagination_arrow = self._driver.find_element(By.XPATH, '//*[@id="all-materials"]/font[2]/a[5]')
+                pagination_arrow = self._driver.find_element(By.XPATH, "//a/span[contains(text(),'Next')]/..")
                 pg_num = pagination_arrow.get_attribute('href')
                 self._driver.execute_script('arguments[0].click()', pagination_arrow)
                 time.sleep(3)
@@ -175,7 +176,7 @@ class Techсrunch:
         self._driver.get(url)
         self.logger.debug('Entered on web page ' + url)
         time.sleep(delay)
-        self._agree_cookie_pass()
+        # self._agree_cookie_pass()
 
     def _agree_cookie_pass(self):
         """
@@ -203,4 +204,3 @@ class Techсrunch:
 
         self._content_document.append(_doc)
         self.logger.info(self._find_document_text_for_logger(_doc))
-
